@@ -1,26 +1,50 @@
 from flask import request
 from flask_restx import Resource, Namespace
 
-from implemented import auth_service
+from implemented import auth_service, user_service
+
 
 auth_ns = Namespace('auth')
 
 
-@auth_ns.route('/')
+@auth_ns.route('/login')
 class AuthsService(Resource):
     def post(self):
         req_json = request.json
-        username = req_json.get('username')
+        email = req_json.get('email')
         password = req_json.get('password')
 
-        if None in [username, password]:
-            return '', 401
+        if None in [email, password]:
+            return '', 400
 
-        tokens = auth_service.generate_token(username, password)
+        tokens = auth_service.generate_token(email, password)
         return tokens, 201
 
     def put(self):
         req_json = request.json
-        token = req_json.get('refresh_token')
-        tokens = auth_service.approve_refresh_token(token)
+        access_token = req_json.get('access_token')
+        refresh_token = req_json.get('refresh_token')
+
+        validated = auth_service.validate_tokens(access_token, refresh_token)
+
+        if not validated:
+            return 'Invalid token', 400
+
+        tokens = auth_service.approve_refresh_token(refresh_token)
         return tokens, 201
+
+
+@auth_ns.route('/register')
+class RegisterViews(Resource):
+    def port(self):
+        data = request.json
+
+        email = data.get('email')
+        password = data.get('password')
+
+        if None in [email, password]:
+            return '', 400
+
+        user_service.create(data)
+
+        return 'Register success', 201

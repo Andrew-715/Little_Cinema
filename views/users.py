@@ -32,10 +32,12 @@ class UserView(Resource):
         return sm_d, 200
 
     @admin_required
-    def put(self, bid):
+    def patch(self, bid):
         req_json = request.json
+
         if "id" not in req_json:
             req_json["id"] = bid
+
         user_service.update(req_json)
         return "User updated", 204
 
@@ -43,3 +45,24 @@ class UserView(Resource):
     def delete(self, bid):
         user_service.delete(bid)
         return "User deleted", 204
+
+@user_ns.route('/password')
+class UpdateUserPasswordViews(Resource):
+    def put(self):
+        data = request.json
+
+        email = data.get('email')
+        old_password = data.get('old_password')
+        new_password = data.get('new_password')
+
+        user = user_service.get_user_by_email(email)
+
+        if user_service.compare_passwords(user.password, old_password):
+            user.password = user_service.make_user_password_hash(new_password)
+            result = UserSchema().dump(user)
+            user_service.update(result)
+            print('Password updated')
+        else:
+            print('Password is not updated')
+
+        return '', 201

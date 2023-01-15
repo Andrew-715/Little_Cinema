@@ -19,12 +19,14 @@ class UserService:
     def get_by_username(self, username):
         return self.dao.get_by_username(username)
 
+    def get_user_by_email(self, email):
+        return self.dao.get_user_by_email(email)
+
     def create(self, user_d):
         user_d['password'] = self.make_user_password_hash(user_d.get('password'))
         return self.dao.create(user_d)
 
     def update(self, user_d):
-        user_d['password'] = self.make_user_password_hash(user_d.get('password'))
         self.dao.update(user_d)
         return self.dao
 
@@ -34,7 +36,7 @@ class UserService:
     def make_user_password_hash(self, password):
         return base64.b64encode(hashlib.pbkdf2_hmac(
             'sha256',
-            password.encode('utf-8'),  # Convert the password to bytes
+            password.encode('utf-8'),
             PWD_HASH_SALT,
             PWD_HASH_ITERATIONS
         ))
